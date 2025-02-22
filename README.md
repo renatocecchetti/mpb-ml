@@ -1,10 +1,24 @@
 # mpb-ml
 Este repositório contém o Modelo de Aprendizado de Máquina, Conjunto de Dados e Código de Treinamento para Análise de Viés Político em Veículos de Comunicação Brasileiros
+<br><br>
+# 🚀 Instalação
+## Clone o repositório
+```bash
+git clone https://github.com/renatocecchetti/mpb-ml.git
+cd mpb-ml
+```
 
-# News Portal Scraper
+## Instale as dependências
+```bash
+pip install -r requirements.txt
+```
+<br><br>
+# Principais Recrusos
+
+## News Portal Scraper
 Sistema de coleta automatizada de notícias dos principais portais jornalísticos do Brasil.
 
-## 📰 Sobre
+### 📰 Sobre
 Sistema que realiza scraping de colunas políticas dos seguintes portais:
 
 - G1
@@ -14,20 +28,8 @@ Sistema que realiza scraping de colunas políticas dos seguintes portais:
 - IstoÉ
 - Metrópoles
 
-## 🚀 Instalação
-### Clone o repositório
-```bash
-git clone https://github.com/renatocecchetti/mpb-ml.git
-cd mpb-ml
-```
-
-### Instale as dependências
-```bash
-pip install -r requirements.txt
-```
-
-## 💻 Como Usar
-### Uso Básico
+### 💻 Como Usar
+#### Uso Básico
 ```python
 from NewsPortalScraper import NewsPortalScraper
 
@@ -43,7 +45,7 @@ all_texts = scraper.scrape_all(limit_per_columnist=100)
 for portal, texts in all_texts.items():
     scraper.save_portal_texts(portal, texts, f'{portal}_political_news.txt')
 ```
-### Métodos Disponíveis
+#### Métodos Disponíveis
 | Método | Descrição |
 |--------|-----------|
 | `scrape_g1(limit_per_columnist=100)` | Coleta textos dos colunistas políticos do G1 |
@@ -55,7 +57,7 @@ for portal, texts in all_texts.items():
 | `scrape_all(limit_per_columnist=100)` | Coleta textos de todos os portais |
 | `save_portal_texts(portal, texts, filename)` | Salva os textos coletados em arquivo |
 
-### Exemplo de Coleta Específica
+#### Exemplo de Coleta Específica
 ```python
 # Coleta apenas da CNN Brasil
 cnn_texts = scraper.scrape_cnn(limit_pages=10)
@@ -65,7 +67,7 @@ scraper.save_portal_texts('cnn', cnn_texts, 'cnn_political_news.txt')
 folha_texts = scraper.scrape_folha(limit_per_columnist=50)
 scraper.save_portal_texts('folha', folha_texts, 'folha_political_news.txt')
 ```
-## 📋 Requisitos
+#### 📋 Requisitos
 ```bash
 Python 3.7+
 requests>=2.31.0
@@ -73,13 +75,72 @@ beautifulsoup4>=4.12.2
 tqdm>=4.66.1
 lxml>=4.9.3
 ```
-## ⚠️ Limitações e Considerações
+### ⚠️ Limitações e Considerações
 - O scraper respeita delays entre requisições para evitar sobrecarga dos servidores
 - Alguns portais podem requerer autenticação para acesso completo ao conteúdo
 - As classes CSS dos portais podem mudar, necessitando atualização do código
 - O número real de textos coletados pode ser menor que o limite definido
 
-## 🏗️ Estrutura do Projeto
+## 🏛️ Coletor de Discursos de Deputados
+
+### Sobre
+Classe Python para coletar discursos de deputados através da API da Câmara dos Deputados.
+
+### 🚀 Como Usar
+
+#### Uso Básico
+```python
+from discursos_collector import DiscursosDeputadosCollector
+
+# Inicializa o coletor
+collector = DiscursosDeputadosCollector()
+
+# Coleta discursos de um período específico
+df = collector.collect_discursos(
+    data_inicio='2025-01-01',
+    data_fim='2025-02-22',
+    output_file='Discursos_2025.csv'
+)
+
+# Visualiza os primeiros registros
+print(df.head())
+```
+### 📊 Estrutura dos Dados Coletados
+
+| Coluna | Descrição |
+|:-------|:----------|
+| `email` | Email institucional do deputado |
+| `id` | ID único do deputado na Câmara |
+| `idLegislatura` | ID da legislatura atual |
+| `nome` | Nome completo do parlamentar |
+| `siglaPartido` | Sigla do partido político |
+| `siglaUf` | Unidade federativa que representa |
+| `uri` | URI do deputado na API |
+| `uriPartido` | URI do partido na API |
+| `urlFoto` | URL da foto oficial |
+| `dataHoraFim` | Timestamp do fim do discurso |
+| `dataHoraInicio` | Timestamp do início do discurso |
+| `keywords` | Palavras-chave do discurso |
+| `sumario` | Resumo do conteúdo |
+| `tipoDiscurso` | Classificação do discurso |
+| `transcricao` | Texto completo |
+| `urlAudio` | Link para o áudio |
+| `urlVideo` | Link para o vídeo |
+
+### 📋 Requisitos
+```bash
+Python 3.7+
+requests>=2.31.0
+pandas>=2.0.0
+python-dateutil>=2.8.2
+```
+### ⚠️ Limitações e Considerações
+- A API pode ter limites de requisições
+- Alguns discursos podem não ter transcrição disponível
+- O tempo de coleta pode variar dependendo do período solicitado
+- Necessita conexão estável com a internet
+<br><br>
+# 🏗️ Estrutura do Projeto
 ```tree
 news-portal-scraper/
 ├── src/
@@ -89,9 +150,10 @@ news-portal-scraper/
 ├── requirements.txt
 └── README.md
 ```
-
-## 📝 Licença
+<br><br>
+# 📝 Licença
 Este projeto está licenciado sob a licença Apache-2.0 license - veja o arquivo [LICENSE](http://www.apache.org/licenses/LICENSE-2.0) para detalhes.
+<br><br>
 
-## 🤝 Contribuindo
+# 🤝 Contribuindo
 Contribuições são bem-vindas!
