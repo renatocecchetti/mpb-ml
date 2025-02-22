@@ -56,6 +56,7 @@ class DiscursosDeputadosCollector:
         
         try:
             while True:
+                # amazonq-ignore-next-line
                 response = requests.get(
                     f"{self.base_url}/deputados/{deputado_id}/discursos",
                     params={

@@ -100,7 +100,7 @@ class NewsScraper:
         try:
             with open(filename, 'w', encoding='utf-8') as file:
                 for text in texts:
-                    file.write(text + '\n')
+                    file.write(text.replace('\n', ' ').replace('\r', '') + '\n')
             logger.info(f'Textos salvos em {filename}')
         except Exception as e:
             logger.exception(f'Erro ao salvar arquivo: {str(e)}')

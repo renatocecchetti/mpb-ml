@@ -1,0 +1,6 @@
+Análise de Viés Político - CNN
+Total de textos analisados: 33
+
+Distribuição por orientação política:
+Esquerda: 42.4%
+Direita: 57.6%
