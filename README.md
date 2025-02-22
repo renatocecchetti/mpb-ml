@@ -13,9 +13,9 @@ cd mpb-ml
 pip install -r requirements.txt
 ```
 <br><br>
-# Principais Recrusos
+# Principais Recursos
 
-## News Portal Scraper
+## Crapper de portais de notícias
 Sistema de coleta automatizada de notícias dos principais portais jornalísticos do Brasil.
 
 ### 📰 Sobre
