@@ -84,28 +84,56 @@ lxml>=4.9.3
 ## 🏛️ Coletor de Discursos de Deputados
 
 ### Sobre
-Classe Python para coletar discursos de deputados através da API da Câmara dos Deputados.
+Classe Python para coletar discursos de deputados através da API da Câmara dos Deputados e processo de enriquecimento com dados de espectro político dos partidos brasileiros
 
 ### 🚀 Como Usar
 
 #### Uso Básico
 ```python
-from discursos_collector import DiscursosDeputadosCollector
+from DiscursosDeputadosCollector import DiscursosDeputadosCollector
+from PoliticalSpectrumEnricher import PoliticalSpectrumEnricher
 
-# Inicializa o coletor
+# Exemplo de uso
 collector = DiscursosDeputadosCollector()
+
+path = '../../data/speech'
+speech_file = f'{path}/Discursos.csv'
+party_file = f'{path}/Partidos.csv'
+merged_file = f'{path}/Discursos_Enriquecidos.csv'
 
 # Coleta discursos de um período específico
 df = collector.collect_discursos(
-    data_inicio='2025-01-01',
-    data_fim='2025-02-22',
-    output_file='Discursos_2025.csv'
+    data_inicio='2025-02-01',
+    data_fim='2025-02-05',
+    output_file=speech_file
 )
 
-# Visualiza os primeiros registros
-print(df.head())
+# Análise dos dados
+print(f"Total de discursos coletados: {len(df)}")
+print("\nAmostra de transcricões:")
+print(df.sample(5)['transcricao'])
+
+# Exemplo de uso
+enricher = PoliticalSpectrumEnricher()
+
+# Carrega os dados
+enricher.load_data(
+    partidos_path=party_file,
+    discursos_path=speech_file
+)
+
+# Enriquece os dados
+df_enriched = enricher.enrich_data()
+
+# Salva os dados enriquecidos
+enricher.save_enriched_data(merged_file)
+
+# Obtém estatísticas
+stats = enricher.get_spectrum_statistics()
+print("\nEstatísticas por Espectro Político:")
+print(stats)
 ```
-### 📊 Estrutura dos Dados Coletados
+### 📊 Estrutura dos Dados Coletados e Enriquecidos
 
 | Coluna | Descrição |
 |:-------|:----------|
@@ -126,6 +154,7 @@ print(df.head())
 | `transcricao` | Texto completo |
 | `urlAudio` | Link para o áudio |
 | `urlVideo` | Link para o vídeo |
+| `Espectro Político` | Espectro Político do Partido |
 
 ### 📋 Requisitos
 ```bash
