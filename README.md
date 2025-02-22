@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ## 💻 Como Usar
 ### Uso Básico
 ```python
-from news_portal_scraper import NewsPortalScraper
+from NewsPortalScraper import NewsPortalScraper
 
 # Inicializa o scraper
 scraper = NewsPortalScraper()
