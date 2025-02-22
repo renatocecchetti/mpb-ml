@@ -15,7 +15,7 @@ pip install -r requirements.txt
 <br><br>
 # Principais Recursos
 
-## Crapper de portais de notícias
+## Scrapper de portais de notícias
 Sistema de coleta automatizada de notícias dos principais portais jornalísticos do Brasil.
 
 ### 📰 Sobre
