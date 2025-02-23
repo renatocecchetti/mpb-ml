@@ -1,4 +1,5 @@
 __pycache__/
 data/speech/*
+!data/speech/Partidos.csv
 .ipynb_checkpoints/
 .vscode/
