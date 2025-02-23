@@ -1,6 +1,7 @@
 Análise de Viés Político - G1
-Total de textos analisados: 8
+Total de textos analisados: 799
 
 Distribuição por orientação política:
-Direita: 75.0%
-Esquerda: 25.0%
+Esquerda: 71.2%
+Centro: 2.5%
+Direita: 26.3%

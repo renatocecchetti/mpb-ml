@@ -11,8 +11,8 @@ merged_file = f'{path}/Discursos_Enriquecidos.csv'
 
 # Coleta discursos de um período específico
 df = collector.collect_discursos(
-    data_inicio='2025-02-01',
-    data_fim='2025-02-05',
+    data_inicio='2020-01-01',
+    data_fim='2024-12-31',
     output_file=speech_file
 )
 

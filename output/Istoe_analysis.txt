@@ -1,6 +1,7 @@
 Análise de Viés Político - Istoe
-Total de textos analisados: 2
+Total de textos analisados: 200
 
 Distribuição por orientação política:
-Esquerda: 50.0%
-Direita: 50.0%
+Centro: 10.0%
+Esquerda: 25.0%
+Direita: 65.0%

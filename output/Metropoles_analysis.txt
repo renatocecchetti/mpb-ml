@@ -1,6 +1,7 @@
 Análise de Viés Político - Metropoles
-Total de textos analisados: 6
+Total de textos analisados: 600
 
 Distribuição por orientação política:
-Direita: 66.7%
-Esquerda: 33.3%
+Direita: 47.5%
+Centro: 18.3%
+Esquerda: 34.2%

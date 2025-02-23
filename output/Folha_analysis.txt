@@ -1,6 +1,7 @@
 Análise de Viés Político - Folha
-Total de textos analisados: 16
+Total de textos analisados: 1591
 
 Distribuição por orientação política:
-Esquerda: 37.5%
-Direita: 62.5%
+Esquerda: 48.4%
+Direita: 37.5%
+Centro: 14.1%

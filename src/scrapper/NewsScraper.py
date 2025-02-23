@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import logging
 from typing import List, Dict
+import time
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
