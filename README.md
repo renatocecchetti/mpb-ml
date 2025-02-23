@@ -169,20 +169,154 @@ python-dateutil>=2.8.2
 - O tempo de coleta pode variar dependendo do período solicitado
 - Necessita conexão estável com a internet
 <br><br>
+# 🎯 Treinamento do Modelo, Inferência e Visualização de Viés Político em Mídia
+## 📊 MediaBiasAnalyzer
+
+### Descrição
+Classe principal responsável por coordenar o processo de treinamento e análise de viés político em textos jornalísticos.
+
+### Uso
+```python
+from src.main import MediaBiasAnalyzer
+
+# Inicializa o analisador
+analyzer = MediaBiasAnalyzer()
+
+# Treina o modelo
+analyzer.train_model('data/training_data.csv')
+
+# Analisa um portal específico
+analyzer.analyze_media('G1')
+
+# Analisa todos os portais configurados
+analyzer.analyze_media()
+```
+
+## 🤖 PoliticalBiasModelTrainer
+### Descrição
+Classe responsável pelo treinamento do modelo de classificação de viés político.
+
+### Uso
+```python
+from src.models.trainer import PoliticalBiasModelTrainer
+
+# Instancia a classe de treinamento
+trainer = PoliticalBiasModelTrainer()
+
+# Prepara dados e treina modelo
+X, y = trainer.prepare_data(df)
+model, metrics = trainer.train(X, y)
+
+# Salva modelo treinado
+trainer.save_model('models/political_bias_model.joblib')
+```
+
+## 🔍 PoliticalBiasInferencer
+### Descrição
+Classe responsável por realizar inferências usando o modelo treinado.
+
+### Uso
+```python
+from src.models.inferencer import PoliticalBiasInferencer
+
+# Inicializa inferenciador
+inferencer = PoliticalBiasInferencer(
+    model_path='models/political_bias_model.joblib',
+    bert_model='neuralmind/bert-base-portuguese-cased'
+)
+
+# Predição individual
+prediction = inferencer.predict("texto do artigo")
+
+# Predição em lote
+predictions = inferencer.predict_batch(texts)
+
+# Análise completa
+analysis = inferencer.analyze_media_bias(texts)
+```
+### ⚠️ Notas Importantes
+- O modelo BERT requer GPU para treinamento eficiente
+- Textos muito longos são truncados em 512 tokens
+- Recomenda-se pelo menos 1000 exemplos para treinamento
+- Os resultados podem variar dependendo dos dados de treinamento
+
+## 📊 MediaBiasVisualizer
+
+### Descrição
+Classe responsável pela visualização e análise gráfica dos resultados de classificação de viés político em textos jornalísticos.
+
+### Uso Básico
+```python
+from src.visual.visualizer import MediaBiasVisualizer
+from src.config.config_manager import ConfigManager
+
+# Inicializa o visualizador
+visualizer = MediaBiasVisualizer()
+
+# Plota gráfico para um portal específico
+visualizer.plot_portal_bias('G1')
+```
+<br>
+
 # 🏗️ Estrutura do Projeto
 ```tree
-news-portal-scraper/
-├── src/
-│   ├── __init__.py
-│   ├── news_scraper.py
-│   └── news_portal_scraper.py
+.
+├── LICENSE
+├── README.md
+├── data
+│   ├── portals
+│   │   ├── cnn_political_news.txt
+│   │   ├── folha_political_news.txt
+│   │   ├── g1_political_news.txt
+│   │   ├── gazeta_political_news.txt
+│   │   ├── istoe_political_news.txt
+│   │   └── metropoles_political_news.txt
+│   └── speech
+│       └── Partidos.csv
+├── models
+│   └── political_bias_model.joblib
+├── notebooks
+│   └── MediaBiasReport.ipynb
+├── output
+│   ├── CNN_analysis.txt
+│   ├── CNN_predictions.csv
+│   ├── Folha_analysis.txt
+│   ├── Folha_predictions.csv
+│   ├── G1_analysis.txt
+│   ├── G1_predictions.csv
+│   ├── Gazeta_analysis.txt
+│   ├── Gazeta_predictions.csv
+│   ├── Istoe_analysis.txt
+│   ├── Istoe_predictions.csv
+│   ├── Metropoles_analysis.txt
+│   ├── Metropoles_predictions.csv
+│   ├── metrics_20250222_174248.txt
+│   └── metrics_20250223_103248.txt
 ├── requirements.txt
-└── README.md
+└── src
+    ├── main.py
+    ├── model
+    │   ├── MediaBiasAnalyzer.py
+    │   ├── PoliticalBiasInferencer.py
+    │   ├── PoliticalBiasModelTrainer.py
+    │   └── main.py
+    ├── scrapper
+    │   ├── NewsPortalScraper.py
+    │   ├── NewsScraper.py
+    │   └── main.py
+    ├── speech
+    │   ├── DiscursosDeputadosCollector.py
+    │   ├── PoliticalSpectrumEnricher.py
+    │   └── main.py
+    └── visual
+        └── MediaBiasVisualizer.py
 ```
-<br><br>
+<br>
+
 # 📝 Licença
 Este projeto está licenciado sob a licença Apache-2.0 license - veja o arquivo [LICENSE](http://www.apache.org/licenses/LICENSE-2.0) para detalhes.
-<br><br>
+
+<br>
 
 # 🤝 Contribuindo
 Contribuições são bem-vindas!
