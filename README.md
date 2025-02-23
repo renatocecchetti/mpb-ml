@@ -1,5 +1,7 @@
 # mpb-ml
 Este repositório contém o Modelo de Aprendizado de Máquina, Conjunto de Dados e Código de Treinamento para Análise de Viés Político em Veículos de Comunicação Brasileiros
+
+Pode ser utilizado de forma completa através da execução do pipeline ou de forma modularizada realizando a chamada à cada uma das funções.
 <br><br>
 # 🚀 Instalação
 ## Clone o repositório
@@ -13,8 +15,23 @@ cd mpb-ml
 pip install -r requirements.txt
 ```
 <br><br>
-# Principais Recursos
 
+# Pipeline Completo
+O pipeline irá realizar os seguintes passos:
+1. Coleta dos discursos dos deputados
+2. Enriquecimento com dados do espectro político dos partidos
+3. Coleta de textos das colunas dos portais
+4. Treinamento do modelo de classificação de viés
+5. Realização de inferência nos dados dos portais
+
+## 💻 Como Usar
+```bash
+python src/main.py
+```
+## Visualização dos Resultados
+Um exemplo de visualização do resultado do Pipeline Completo encontra-se disponível no Jupyter Notebook [MediaBiasReport.ipynb](https://github.com/renatocecchetti/mpb-ml/blob/main/notebooks/MediaBiasReport.ipynb)
+
+# Modularizado
 ## Scrapper de portais de notícias
 Sistema de coleta automatizada de notícias dos principais portais jornalísticos do Brasil.
 
@@ -93,7 +110,7 @@ Classe Python para coletar discursos de deputados através da API da Câmara dos
 from DiscursosDeputadosCollector import DiscursosDeputadosCollector
 from PoliticalSpectrumEnricher import PoliticalSpectrumEnricher
 
-# Exemplo de uso
+# Exemplo de uso do coletor de discursos
 collector = DiscursosDeputadosCollector()
 
 path = '../../data/speech'
@@ -108,12 +125,7 @@ df = collector.collect_discursos(
     output_file=speech_file
 )
 
-# Análise dos dados
-print(f"Total de discursos coletados: {len(df)}")
-print("\nAmostra de transcricões:")
-print(df.sample(5)['transcricao'])
-
-# Exemplo de uso
+# Exemplo de uso do enriquecedor
 enricher = PoliticalSpectrumEnricher()
 
 # Carrega os dados
@@ -127,11 +139,6 @@ df_enriched = enricher.enrich_data()
 
 # Salva os dados enriquecidos
 enricher.save_enriched_data(merged_file)
-
-# Obtém estatísticas
-stats = enricher.get_spectrum_statistics()
-print("\nEstatísticas por Espectro Político:")
-print(stats)
 ```
 ### 📊 Estrutura dos Dados Coletados e Enriquecidos
 
@@ -169,7 +176,7 @@ python-dateutil>=2.8.2
 - O tempo de coleta pode variar dependendo do período solicitado
 - Necessita conexão estável com a internet
 <br><br>
-# 🎯 Treinamento do Modelo, Inferência e Visualização de Viés Político em Mídia
+# 🎯 Treinamento e Inferência do Modelo de Viés Político em Mídia
 ## 📊 MediaBiasAnalyzer
 
 ### Descrição
@@ -177,62 +184,19 @@ Classe principal responsável por coordenar o processo de treinamento e análise
 
 ### Uso
 ```python
-from src.main import MediaBiasAnalyzer
+from MediaBiasAnalyzer import MediaBiasAnalyzer
+
+path = '../../data/speech'
+discursos = f'{path}/Discursos_Enriquecidos.csv'
 
 # Inicializa o analisador
 analyzer = MediaBiasAnalyzer()
 
 # Treina o modelo
-analyzer.train_model('data/training_data.csv')
-
-# Analisa um portal específico
-analyzer.analyze_media('G1')
+analyzer.train_model(training_data=discursos)
 
 # Analisa todos os portais configurados
 analyzer.analyze_media()
-```
-
-## 🤖 PoliticalBiasModelTrainer
-### Descrição
-Classe responsável pelo treinamento do modelo de classificação de viés político.
-
-### Uso
-```python
-from src.models.trainer import PoliticalBiasModelTrainer
-
-# Instancia a classe de treinamento
-trainer = PoliticalBiasModelTrainer()
-
-# Prepara dados e treina modelo
-X, y = trainer.prepare_data(df)
-model, metrics = trainer.train(X, y)
-
-# Salva modelo treinado
-trainer.save_model('models/political_bias_model.joblib')
-```
-
-## 🔍 PoliticalBiasInferencer
-### Descrição
-Classe responsável por realizar inferências usando o modelo treinado.
-
-### Uso
-```python
-from src.models.inferencer import PoliticalBiasInferencer
-
-# Inicializa inferenciador
-inferencer = PoliticalBiasInferencer(
-    model_path='models/political_bias_model.joblib',
-    bert_model='neuralmind/bert-base-portuguese-cased'
-)
-
-# Predição individual
-prediction = inferencer.predict("texto do artigo")
-
-# Predição em lote
-predictions = inferencer.predict_batch(texts)
-
-# Análise completa
-analysis = inferencer.analyze_media_bias(texts)
 ```
 ### ⚠️ Notas Importantes
 - O modelo BERT requer GPU para treinamento eficiente
@@ -247,8 +211,7 @@ Classe responsável pela visualização e análise gráfica dos resultados de cl
 
 ### Uso Básico
 ```python
-from src.visual.visualizer import MediaBiasVisualizer
-from src.config.config_manager import ConfigManager
+from MediaBiasVisualizer import MediaBiasVisualizer
 
 # Inicializa o visualizador
 visualizer = MediaBiasVisualizer()
