@@ -1,4 +1,4 @@
-# mpb-ml
+# mpb-ml - Media Political Bias Machine Learning
 Este repositório contém o Modelo de Aprendizado de Máquina, Conjunto de Dados e Código de Treinamento para Análise de Viés Político em Veículos de Comunicação Brasileiros
 
 Pode ser utilizado de forma completa através da execução do pipeline ou de forma modularizada realizando a chamada à cada uma das funções.
