@@ -31,6 +31,136 @@ python src/main.py
 ## Visualização dos Resultados
 Um exemplo de visualização do resultado do Pipeline Completo encontra-se disponível no Jupyter Notebook [MediaBiasReport.ipynb](https://github.com/renatocecchetti/mpb-ml/blob/main/notebooks/MediaBiasReport.ipynb)
 
+# Arquivo de Configuração (config.yaml)
+## Visão Geral
+O arquivo config.yaml centraliza todas as configurações do sistema de análise de viés político em texto. Este guia detalha cada seção e suas opções.
+
+Estrutura do Arquivo
+1. Configurações Gerais (general)
+```bash
+general:
+  data_dir: 'data'              # Diretório base para dados
+  data_dir_portals: 'data/portals'  # Subdiretório para dados dos portais
+  data_dir_speech: 'data/speech'    # Subdiretório para discursos
+  models_dir: 'models'          # Diretório para modelos treinados
+  output_dir: 'output'          # Diretório para resultados
+  log_level: 'INFO'             # Nível de logging
+  log_format: '%(asctime)s...'  # Formato das mensagens de log
+
+```
+2. Configurações do Modelo (model)
+```bash
+model:
+  name: 'political_bias_model.joblib'  # Nome do arquivo do modelo
+  bert_model: 'neuralmind/bert-base-portuguese-cased'  # Modelo BERT pré-treinado
+  hidden_layer_sizes: [100]     # Arquitetura da rede neural
+  max_iter: 5000                # Máximo de iterações
+  random_state: 1               # Semente aleatória
+  embeddings_file_name: 'embeddings.npy'  # Arquivo de embeddings
+  reuse_embedding: False        # Reutilizar embeddings existentes
+```
+3. Portais de Notícias (news_portals)
+- supported_portals: Lista de portais suportados
+- Para cada portal:
+    - columnists: Dicionário de colunistas e suas URLs
+    - content_class: Classe CSS para extrair conteúdo
+    - post_class: Classe CSS para identificar posts
+
+Exemplo de configuração de portal:
+```bash
+g1:
+  columnists:
+    andreia_sadi: 'https://g1.globo.com/politica/blog/andreia-sadi/'
+    # ...
+  content_class: 'mc-column content-text active-extra-styles'
+  post_class: 'bastian-feed-item'
+```
+4. Configurações de Scraping (scraping)
+```bash
+scraping:
+  user_agent: 'Mozilla/5.0...'  # User agent para requisições
+  timeout: 10                   # Timeout em segundos
+  sleep_time: 0.5              # Intervalo entre requisições
+  max_retries: 3               # Máximo de tentativas
+  items_per_page: 100          # Itens por página
+  limit_per_columnist: 100     # Limite de artigos por colunista
+```
+5. Visualização (visualization)
+```bash
+visualization:
+  figure_size: [10, 6]         # Tamanho dos gráficos
+  colors:                      # Cores por orientação política
+    left: 'red'
+    center: 'gray'
+    right: 'blue'
+  spectrum_order: ['Esquerda', 'Centro', 'Direita']  # Ordem no gráfico
+```
+6. API da Câmara (camara_api)
+```bash
+camara_api:
+  base_url: 'https://dadosabertos.camara.leg.br/api/v2'
+  endpoints:                    # Endpoints da API
+    deputados: '/deputados'
+    discursos: '/deputados/{id}/discursos'
+  params:                      # Parâmetros padrão
+    ordem: 'ASC'
+    ordenarPor: 'nome'
+    itens_por_pagina: 100
+```
+7. Configurações de Discursos (discursos)
+```bash
+discursos:
+  paths:                       # Caminhos dos arquivos
+    base_dir: 'data/speech'
+    discursos_file: 'Discursos.csv'
+    # ...
+  data_collection:            # Parâmetros de coleta
+    data_inicio: '2021-03-02'
+    data_fim: '2025-03-01'
+    sample_size: 5
+  required_columns:           # Colunas obrigatórias
+    discursos: ['transcricao', 'siglaPartido', ...]
+    partidos: ['Sigla', 'Nome', ...]
+  spectrum_mapping:          # Mapeamento do espectro político
+    'Centro': 'Centro'
+    'Centro-direita': 'Direita'
+    # ...
+```
+### Uso e Manutenção
+#### Adicionando Novos Portais
+1. Adicione o nome do portal em supported_portals
+2. Crie uma nova seção com:
+    - Lista de colunistas
+    - Classes CSS necessárias
+    - Configurações específicas
+
+#### Atualizando Configurações
+- Scraping: Ajuste sleep_time e timeout conforme necessário
+- Modelo: Modifique parâmetros do modelo em model
+- Visualização: Personalize cores e tamanhos em visualization
+
+#### Manutenção
+- Verifique URLs periodicamente
+- Atualize classes CSS quando os sites mudarem
+- Ajuste parâmetros de scraping conforme necessidade
+
+#### Boas Práticas
+- Mantenha backup do arquivo
+- Documente alterações
+- Teste novas configurações em ambiente de desenvolvimento
+- Monitore logs para ajustes de parâmetros
+
+#### Observações
+- Classes CSS podem mudar com atualizações dos portais
+- Respeite limites de requisições dos sites
+- Mantenha sleep_time adequado para evitar bloqueios
+- Faça backup regular dos dados coletados
+
+<br>
+Este arquivo de configuração centraliza todas as configurações do sistema, facilitando manutenção e ajustes sem necessidade de alterar o código-fonte.
+
+<br>
+
 # Modularizado
 ## Scrapper de portais de notícias
 Sistema de coleta automatizada de notícias dos principais portais jornalísticos do Brasil.
