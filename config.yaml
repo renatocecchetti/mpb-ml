@@ -1,0 +1,211 @@
+# config.yaml
+
+# Configurações gerais
+general:
+  data_dir: 'data'
+  data_dir_portals: 'data/portals'
+  data_dir_speech: 'data/speech'
+  models_dir: 'models'
+  output_dir: 'output'
+  log_level: 'INFO'
+  log_format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+# Configurações do modelo
+model:
+  name: 'political_bias_model.joblib'
+  bert_model: 'neuralmind/bert-base-portuguese-cased'
+  hidden_layer_sizes: [100]
+  max_iter: 5000
+  random_state: 1
+  embeddings_file_name: 'embeddings.npy'
+  reuse_embedding: False
+
+# Configurações de portais de notícias
+news_portals:
+  supported_portals: ['G1', 'Folha', 'Gazeta', 'CNN', 'Istoe', 'Metropoles', 'UOL', 'Estadao']
+
+  g1:
+    columnists:
+      andreia_sadi: 'https://g1.globo.com/politica/blog/andreia-sadi/'
+      camila_bomfim: 'https://g1.globo.com/politica/blog/camila-bomfim/'
+      daniela_lima: 'https://g1.globo.com/politica/blog/daniela-lima/'
+      gerson_camarotti: 'https://g1.globo.com/politica/blog/gerson-camarotti/'
+      julia_duailibi: 'https://g1.globo.com/politica/blog/julia-duailibi/'
+      natuza_nery: 'https://g1.globo.com/politica/blog/natuza-nery/'
+      octavio_guedes: 'https://g1.globo.com/politica/blog/octavio-guedes/'
+      valdo_cruz: 'https://g1.globo.com/politica/blog/valdo-cruz/'
+      tales_faria: 'https://g1.globo.com/politica/blog/tales-faria/'
+      ana_flor: 'https://g1.globo.com/politica/blog/ana-flor/'
+      fernando_gabeira: 'https://g1.globo.com/politica/blog/fernando-gabeira/'
+      matheus_leitao: 'https://g1.globo.com/politica/blog/matheus-leitao/'
+    content_class: 'mc-column content-text active-extra-styles'
+    post_class: 'bastian-feed-item'
+
+  folha:
+    columnists:
+      adriana_fernandes: 'https://www1.folha.uol.com.br/colunas/adriana-fernandes/'
+      bruno_boghossian: 'https://www1.folha.uol.com.br/colunas/bruno-boghossian/'
+      camila_rocha: 'https://www1.folha.uol.com.br/colunas/camila-rocha/'
+      celso_rocha: 'https://www1.folha.uol.com.br/colunas/celso-rocha-de-barros/'
+      conrado_hubner: 'https://www1.folha.uol.com.br/colunas/conrado-hubner-mendes/'
+      deborah_bizarria: 'https://www1.folha.uol.com.br/colunas/deborah-bizarria/'
+      djamila_ribeiro: 'https://www1.folha.uol.com.br/colunas/djamila-ribeiro/'
+      dora_kramer: 'https://www1.folha.uol.com.br/colunas/dora-kramer/'
+      frederico_vasconcelos: 'https://www1.folha.uol.com.br/blogs/frederico-vasconcelos/'
+      igor_gielow: 'https://www1.folha.uol.com.br/colunas/igorgielow/'
+      kennedy_alencar: 'https://www1.folha.uol.com.br/colunas/kennedy-alencar/'
+      marcos_lisboa: 'https://www1.folha.uol.com.br/colunas/marcos-lisboa/'
+      mathias_alencastro: 'https://www1.folha.uol.com.br/colunas/mathias-alencastro/'
+      monica_bergamo: 'https://www1.folha.uol.com.br/colunas/monicabergamo/'
+      painel: 'https://www1.folha.uol.com.br/colunas/painel/'
+      thais_oyama: 'https://www1.folha.uol.com.br/colunas/thais-oyama/'
+      vinicius_torres: 'https://www1.folha.uol.com.br/colunas/vinicius-torres-freire/'
+    content_class: 'c-news__content'
+    post_class: 'c-headline__content'
+
+  gazeta:
+    columnists:
+      adriano_gianturco: 'https://www.gazetadopovo.com.br/vozes/adriano-gianturco/'
+      alan_ghani: 'https://www.gazetadopovo.com.br/vozes/alan-ghani/'
+      alexandre_garcia: 'https://www.gazetadopovo.com.br/vozes/alexandre-garcia/'
+      carlos_di_franco: 'https://www.gazetadopovo.com.br/vozes/carlos-alberto-di-franco/'
+      deltan_dallagnol: 'https://www.gazetadopovo.com.br/vozes/deltan-dallagnol/'
+      filipe_martins: 'https://www.gazetadopovo.com.br/vozes/filipe-martins/'
+      guilherme_fiuza: 'https://www.gazetadopovo.com.br/vozes/guilherme-fiuza/'
+      j_r_guzzo: 'https://www.gazetadopovo.com.br/vozes/j-r-guzzo/'
+      joao_figueiredo: 'https://www.gazetadopovo.com.br/vozes/joao-figueiredo/'
+      leonardo_coutinho: 'https://www.gazetadopovo.com.br/vozes/leonardo-coutinho/'
+      miguel_nagib: 'https://www.gazetadopovo.com.br/vozes/miguel-nagib/'
+      rodrigo_constantino: 'https://www.gazetadopovo.com.br/rodrigo-constantino/'
+      sergio_moro: 'https://www.gazetadopovo.com.br/vozes/sergio-moro/'
+    content_class: 'postBody_post-body-container__1KhtH'
+    post_class: 'cardDefault_card-content__q5Ykc'
+
+  cnn:
+    base_url: 'https://www.cnnbrasil.com.br/wp-json/cnnbr/blogs/v1/articles'
+    columnists:
+      id_mapping:
+        larissa_rodrigues: '15966'
+        teo_cury: '16274'
+        julliana_lopes: '16259'
+        iuri_pitta: '488'
+        gustavo_uribe: '16246'
+        elisa_calmon: '48603'
+        daniel_adjuto: '16273'
+        caio_junqueira: '16258'
+        basilia_rodrigues: '16257'
+    content_class: 'single-content'
+
+  istoe:
+    columnists:
+      mazzini: 'https://istoe.com.br/coluna/coluna-do-mazzini/'
+      kertzman: 'https://istoe.com.br/coluna/ricardo-kertzman/'
+      francisco_razzo: 'https://istoe.com.br/coluna/francisco-razzo/'
+      jose_fucs: 'https://istoe.com.br/coluna/maquiavel/'
+      paulo_figueiredo: 'https://istoe.com.br/coluna/paulo-figueiredo/'
+      pedro_adorno: 'https://istoe.com.br/coluna/pedro-adorno/'
+    content_class: 'post-content-wrap col-lg-100 col-md-100'
+    post_class: 'box-article-horizontal-cat d-flex f-column md-column sm-column col-lg-100'
+
+  metropoles:
+    columnists:
+      grande_angular: 'https://www.metropoles.com/colunas/grande-angular'
+      igor_gadelha: 'https://www.metropoles.com/colunas/igor-gadelha'
+      leandro_mazzini: 'https://www.metropoles.com/colunas/podcast-do-leandro-mazzini'
+      tacio_lorran: 'https://www.metropoles.com/colunas/tacio-lorran'
+      mario_sabino: 'https://www.metropoles.com/colunas/mario-sabino'
+      paulo_cappelli: 'https://www.metropoles.com/colunas/paulo-cappelli'
+      guilherme_amado: 'https://www.metropoles.com/colunas/guilherme-amado'
+      rodrigo_rangel: 'https://www.metropoles.com/colunas/rodrigo-rangel'
+    content_class: 'ConteudoNoticiaWrapper__Artigo-sc-19fsm27-1 iZYHrO'
+    post_class: 'Grid__Col-sc-owmjhw-2 iyeymd'
+
+  uol:
+    columnists:
+      josias_souza: 'https://noticias.uol.com.br/colunas/josias-de-souza/'
+      leonardo_sakamoto: 'https://noticias.uol.com.br/colunas/leonardo-sakamoto/'
+      carla_araujo: 'https://noticias.uol.com.br/colunas/carla-araujo/'
+      jamil_chade: 'https://noticias.uol.com.br/colunas/jamil-chade/'
+      paulo_moreira: 'https://noticias.uol.com.br/colunas/paulo-moreira-leite/'
+      reinaldo_azevedo: 'https://noticias.uol.com.br/colunas/reinaldo-azevedo/'
+      tales_faria: 'https://noticias.uol.com.br/colunas/tales-faria/'
+    content_class: 'text-content'
+    post_class: 'thumbnails-wrapper'
+
+  estadao:
+    columnists:
+      broadcast_politico: 'https://politica.estadao.com.br/blogs/coluna-do-estadao/'
+      vera_magalhaes: 'https://politica.estadao.com.br/blogs/vera-magalhaes/'
+      luiz_carlos_azedo: 'https://politica.estadao.com.br/blogs/luiz-carlos-azedo/'
+      felipe_frazao: 'https://politica.estadao.com.br/blogs/felipe-frazao/'
+      eliane_cantanhede: 'https://politica.estadao.com.br/blogs/eliane-cantanhede/'
+      marcelo_godoy: 'https://politica.estadao.com.br/blogs/marcelo-godoy/'
+      marcos_guterman: 'https://politica.estadao.com.br/blogs/marcos-guterman/'
+      pedro_venceslau: 'https://politica.estadao.com.br/blogs/pedro-venceslau/'
+    content_class: 'news-content'
+    post_class: 'news-list'
+
+# Configurações de scraping
+scraping:
+  user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+  timeout: 10
+  sleep_time: 0.5
+  max_retries: 3
+  items_per_page: 100
+  limit_per_columnist: 100
+
+# Configurações de visualização
+visualization:
+  figure_size: [10, 6]
+  colors:
+    left: 'red'
+    center: 'gray'
+    right: 'blue'
+  spectrum_order: ['Esquerda', 'Centro', 'Direita']
+
+# Configurações da API da Câmara
+camara_api:
+  base_url: 'https://dadosabertos.camara.leg.br/api/v2'
+  endpoints:
+    deputados: '/deputados'
+    discursos: '/deputados/{id}/discursos'
+  params:
+    ordem: 'ASC'
+    ordenarPor: 'nome'
+    itens_por_pagina: 100
+
+# Configurações de coleta de discursos
+discursos:
+  paths:
+    base_dir: 'data/speech'
+    discursos_file: 'Discursos.csv'
+    partidos_file: 'Partidos.csv'
+    merged_file: 'Discursos_Enriquecidos.csv'
+    stats_file: 'Stats.txt'
+  
+  data_collection:
+    data_inicio: '2021-03-02'
+    data_fim: '2025-03-01'
+    sample_size: 5
+  
+  required_columns:
+    discursos: ['transcricao', 'siglaPartido', 'nome', 'id']
+    partidos: ['Sigla', 'Nome', 'Espectro Político']
+  
+  output_columns:
+    - 'nome'
+    - 'siglaPartido'
+    - 'transcricao'
+    - 'Espectro Político'
+    - 'dataHoraInicio'
+    - 'keywords'
+    - 'sumario'
+  
+  spectrum_mapping:
+    'Centro': 'Centro'
+    'Centro-direita': 'Direita'
+    'Direita': 'Direita'
+    'Extrema-direita': 'Direita'
+    'Centro-esquerda': 'Esquerda'
+    'Esquerda': 'Esquerda'
+    'Extrema-esquerda': 'Esquerda'

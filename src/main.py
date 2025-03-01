@@ -1,15 +1,12 @@
-# src/main.py
-import logging
-from pathlib import Path
-from datetime import datetime
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
+from src.speech import main as collect_speeches
+from src.scrapper import main as collect_news
+from src.model import main as train_model
 
-from .speech import DiscursosDeputadosCollector, PoliticalSpectrumEnricher
-from .scrapper import NewsPortalScraper
-from .model import MediaBiasAnalyzer
-from .visual import MediaBiasVisualizer
+collect_speeches
+collect_news
+train_model
 
+'''
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -129,3 +126,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''

@@ -1,9 +1,11 @@
-from NewsPortalScraper import NewsPortalScraper
+from src.scrapper import NewsPortalScraper
+from src.config import ConfigManager
 
-# Inicializa o scraper
+config = ConfigManager()
 scraper = NewsPortalScraper()
 
-# coleta de todos os portais
-all_texts = scraper.scrape_all(limit_per_columnist=100)
+all_texts = scraper.scrape_all_portals()
+
+# Salva os textos de cada portal
 for portal, texts in all_texts.items():
-    scraper.save_portal_texts(portal, texts, f'../../data/portals/{portal}_political_news.txt')
+    scraper.save_portal_texts(portal, texts)

@@ -1,4 +1,3 @@
-# model_inferencer.py
 import numpy as np
 import pandas as pd
 from transformers import AutoTokenizer, AutoModel
@@ -6,33 +5,39 @@ import joblib
 from typing import List, Dict
 from collections import Counter
 import logging
+from src.config import ConfigManager
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 class PoliticalBiasInferencer:
-    def __init__(self, 
-                 model_path: str = 'political_bias_model.joblib',
-                 bert_model: str = "neuralmind/bert-base-portuguese-cased"):
-        """
-        Inicializa o inferenciador do modelo de viés político
+    def __init__(self):
+        self.config = ConfigManager()
         
-        Args:
-            model_path: Caminho para o modelo treinado
-            bert_model: Nome do modelo BERT pré-treinado
-        """
-        self.classifier = joblib.load(model_path)
-        self.tokenizer = AutoTokenizer.from_pretrained(bert_model)
-        self.bert_model = AutoModel.from_pretrained(bert_model)
-        self.output_mapping = {
+        model_dir = Path(self.config.get_full_path('general.models_dir'))
+        self.model_path = model_dir / self.config.get('model.name')
+        self.bert_model = self.config.get('model.bert_model')
+        
+        self.classifier = joblib.load(self.model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.bert_model)
+        self.bert_model = AutoModel.from_pretrained(self.bert_model)
+        
+        self.output_mapping = self.config.get('model.output_mapping', {
             0: 'Centro',
             1: 'Direita',
             2: 'Esquerda'
-        }
+        })
+        
+        self.logger = logging.getLogger(__name__)
         
     def predict(self, text: str) -> str:
-        """Realiza predição para um texto"""
-        inputs = self.tokenizer(text, return_tensors="pt", 
-                              truncation=True, padding=True, max_length=512)
+        inputs = self.tokenizer(
+            text, 
+            return_tensors="pt", 
+            truncation=True, 
+            padding=True, 
+            max_length=self.config.get('model.max_length', 512)
+        )
         outputs = self.bert_model(**inputs)
         embedding = outputs.last_hidden_state.mean(dim=1).detach().numpy()
         prediction = self.classifier.predict(embedding)[0]
@@ -54,10 +59,8 @@ class PoliticalBiasInferencer:
         """Analisa o viés político de um conjunto de textos"""
         predictions = self.predict_batch(texts)
         
-        # Remove None values
         predictions = [p for p in predictions if p is not None]
         
-        # Calculate percentages
         total = len(predictions)
         counts = Counter(predictions)
         

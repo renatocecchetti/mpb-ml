@@ -3,6 +3,7 @@ import pandas as pd
 from typing import List, Dict
 import logging
 from datetime import datetime
+from src.config import ConfigManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -14,34 +15,37 @@ class DiscursosDeputadosCollector:
     
     def __init__(self):
         """Inicializa as URLs base e configura headers"""
-        self.base_url = "https://dadosabertos.camara.leg.br/api/v2"
+        self.config = ConfigManager()
+        self.base_url = self.config.get('camara_api.base_url')
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': self.config.get('scraping.user_agent')
         }
+        self.logger = logging.getLogger(__name__)
 
     def get_deputados(self) -> List[Dict]:
         """Obtém lista de deputados"""
         try:
+            endpoint = self.config.get('camara_api.endpoints.deputados')
+
             response = requests.get(
-                f"{self.base_url}/deputados?ordem=ASC&ordenarPor=nome",
+                f"{self.base_url}{endpoint}",
                 headers=self.headers
             )
             
             if response.status_code == 200:
                 return response.json()["dados"]
             else:
-                logger.error(f"Erro ao obter deputados: {response.status_code}")
+                self.logger.error(f"Erro ao obter deputados: {response.status_code}")
                 return []
                 
         except Exception as e:
-            logger.exception(f"Erro ao obter deputados: {str(e)}")
+            self.logger.exception(f"Erro ao obter deputados: {str(e)}")
             return []
 
     def get_discursos_deputado(self, 
                               deputado_id: int, 
                               data_inicio: str, 
-                              data_fim: str,
-                              itens_por_pagina: int = 100) -> List[Dict]:
+                              data_fim: str) -> List[Dict]:
         """
         Obtém discursos de um deputado específico
         
@@ -53,12 +57,13 @@ class DiscursosDeputadosCollector:
         """
         discursos_totais = []
         pagina = 1
+        itens_por_pagina = self.config.get('camara_api.params.itens_por_pagina')
         
         try:
             while True:
-                # amazonq-ignore-next-line
+                endpoint = self.config.get('camara_api.endpoints.discursos').format(id=deputado_id)
                 response = requests.get(
-                    f"{self.base_url}/deputados/{deputado_id}/discursos",
+                    f"{self.base_url}{endpoint}",
                     params={
                         "dataInicio": data_inicio,
                         "dataFim": data_fim,
@@ -79,13 +84,13 @@ class DiscursosDeputadosCollector:
                         
                     pagina += 1
                 else:
-                    logger.error(f"Erro ao obter discursos do deputado {deputado_id}: {response.status_code}")
+                    self.logger.error(f"Erro ao obter discursos do deputado {deputado_id}: {response.status_code}")
                     break
                     
             return discursos_totais
             
         except Exception as e:
-            logger.exception(f"Erro ao obter discursos do deputado {deputado_id}: {str(e)}")
+            self.logger.exception(f"Erro ao obter discursos do deputado {deputado_id}: {str(e)}")
             return []
 
     def collect_discursos(self, 

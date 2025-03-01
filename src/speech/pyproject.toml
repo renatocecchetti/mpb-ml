@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "media-bias-analyzer"
+version = "1.0.0"
+authors = [
+    { name="Renato Cassola", email="renatocecchetti@gmail.com" },
+]
+description = "Analisador de viés político em mídia"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]

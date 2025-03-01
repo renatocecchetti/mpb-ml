@@ -1,7 +1,5 @@
 Análise de Viés Político - Gazeta
-Total de textos analisados: 700
+Total de textos analisados: 1
 
 Distribuição por orientação política:
-Direita: 50.7%
-Esquerda: 44.6%
-Centro: 4.7%
+Esquerda: 100.0%

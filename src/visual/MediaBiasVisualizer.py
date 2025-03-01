@@ -2,19 +2,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
 from pathlib import Path
+from src.config import ConfigManager
 
 class MediaBiasVisualizer:
-    
-    def __init__(self, output_dir: str = 'output'):
+
+    def __init__(self):
         """
         Inicializa o visualizador
         
         Args:
             output_dir: Diretório com os arquivos de predições
         """
-        self.output_dir = Path(output_dir)
-        self.desired_order = ['Esquerda', 'Centro', 'Direita']
-        self.colors = ['red', 'gray', 'blue']
+        self.config = ConfigManager()
+        self.output_dir = Path(self.config.get_full_path('general.output_dir'))
+        self.desired_order = self.config.get('visualization.spectrum_order')
+        self.colors = [
+            self.config.get('visualization.colors.left'),
+            self.config.get('visualization.colors.center'),
+            self.config.get('visualization.colors.right')
+        ]
+        self.figure_size = self.config.get('visualization.figure_size')
         
     def load_predictions(self, portal: str) -> pd.DataFrame:
         """Carrega predições de um portal"""
@@ -37,7 +44,7 @@ class MediaBiasVisualizer:
         }
         
         # Cria gráfico
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=self.figure_size)
         
         # Plota barras
         bars = plt.bar(

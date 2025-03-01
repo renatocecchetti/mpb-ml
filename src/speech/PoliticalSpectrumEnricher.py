@@ -2,6 +2,7 @@ import pandas as pd
 import logging
 from typing import Optional
 from pathlib import Path
+from src.config import ConfigManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +14,11 @@ class PoliticalSpectrumEnricher:
     
     def __init__(self):
         """Inicializa o enricher"""
+        self.config = ConfigManager()
         self.partidos_df = None
         self.discursos_df = None
         self.enriched_df = None
+        self.logger = logging.getLogger(__name__)
 
     def load_data(self,
                   partidos_path: str,
@@ -28,58 +31,61 @@ class PoliticalSpectrumEnricher:
             discursos_path: Caminho para o arquivo de discursos
         """
         try:
-            logger.info(f"Carregando dados de {partidos_path} e {discursos_path}")
+            self.logger.info(f"Carregando dados de {partidos_path} e {discursos_path}")
             
-            # Carrega e processa partidos
             self.partidos_df = pd.read_csv(partidos_path)
             self._process_partidos()
             
-            # Carrega e processa discursos
             self.discursos_df = pd.read_csv(discursos_path)
             self._process_discursos()
             
-            logger.info("Dados carregados com sucesso")
+            self.logger.info("Dados carregados com sucesso")
             
         except Exception as e:
-            logger.exception(f"Erro ao carregar dados: {str(e)}")
+            self.logger.exception(f"Erro ao carregar dados: {str(e)}")
             raise
 
     def _process_partidos(self) -> None:
         """Processa e limpa dados dos partidos"""
         try:
-            # Corrige nomenclatura do espectro político
-            self.partidos_df.loc[
-                self.partidos_df['Espectro Político'] == 'Extrema- direita',
-                'Espectro Político'
-            ] = 'Extrema-direita'
+            # Corrige nomenclatura conforme configuração
+            corrections = self.config.get('data_processing.spectrum_corrections', {})
+            for old, new in corrections.items():
+                self.partidos_df.loc[
+                    self.partidos_df['Espectro Político'] == old,
+                    'Espectro Político'
+                ] = new
             
-            # Remove linhas sem sigla ou espectro político
+            # Remove linhas sem dados essenciais
+            required_columns = self.config.get('data_processing.required_columns.partidos', 
+                                            ['Sigla', 'Espectro Político'])
             self.partidos_df.dropna(
-                subset=['Sigla', 'Espectro Político'],
+                subset=required_columns,
                 how='all',
                 inplace=True
             )
             
-            logger.info(f"Processados dados de {len(self.partidos_df)} partidos")
+            self.logger.info(f"Processados dados de {len(self.partidos_df)} partidos")
             
         except Exception as e:
-            logger.exception(f"Erro ao processar partidos: {str(e)}")
+            self.logger.exception(f"Erro ao processar partidos: {str(e)}")
             raise
 
     def _process_discursos(self) -> None:
         """Processa e limpa dados dos discursos"""
         try:
-            # Remove discursos sem partido
+            required_columns = self.config.get('data_processing.required_columns.discursos', 
+                                            ['siglaPartido'])
             self.discursos_df.dropna(
-                subset=['siglaPartido'],
+                subset=required_columns,
                 how='all',
                 inplace=True
             )
             
-            logger.info(f"Processados dados de {len(self.discursos_df)} discursos")
+            self.logger.info(f"Processados dados de {len(self.discursos_df)} discursos")
             
         except Exception as e:
-            logger.exception(f"Erro ao processar discursos: {str(e)}")
+            self.logger.exception(f"Erro ao processar discursos: {str(e)}")
             raise
 
     def enrich_data(self) -> pd.DataFrame:
@@ -93,32 +99,36 @@ class PoliticalSpectrumEnricher:
             if self.partidos_df is None or self.discursos_df is None:
                 raise ValueError("Dados não foram carregados. Execute load_data primeiro.")
             
-            logger.info("Iniciando enriquecimento dos dados")
+            self.logger.info("Iniciando enriquecimento dos dados")
             
-            # Realiza o merge
+            merge_config = self.config.get('data_processing.merge_config', {
+                'left_on': 'siglaPartido',
+                'right_on': 'Sigla',
+                'how': 'inner'
+            })
+            
             self.enriched_df = self.discursos_df.merge(
                 self.partidos_df[['Sigla', 'Espectro Político']],
-                left_on='siglaPartido',
-                right_on='Sigla',
-                how='inner'
+                **merge_config
             )
             
-            # Remove registros sem espectro político ou transcrição
+            required_columns = self.config.get('data_processing.required_columns.enriched', 
+                                            ['Espectro Político', 'transcricao'])
             self.enriched_df.dropna(
-                subset=['Espectro Político', 'transcricao'],
+                subset=required_columns,
                 how='all',
                 inplace=True
             )
             
-            logger.info(f"Dados enriquecidos: {len(self.enriched_df)} registros")
+            self.logger.info(f"Dados enriquecidos: {len(self.enriched_df)} registros")
             
             return self.enriched_df
             
         except Exception as e:
-            logger.exception(f"Erro ao enriquecer dados: {str(e)}")
+            self.logger.exception(f"Erro ao enriquecer dados: {str(e)}")
             raise
 
-    def save_enriched_data(self, output_path: str) -> None:
+    def save_enriched_data(self, enriched_path, stats_path: str) -> None:
         """
         Salva os dados enriquecidos em arquivo
         
@@ -128,13 +138,24 @@ class PoliticalSpectrumEnricher:
         try:
             if self.enriched_df is None:
                 raise ValueError("Não há dados enriquecidos. Execute enrich_data primeiro.")
+            
+            self.enriched_df.to_csv(enriched_path, index=True)
                 
-            self.enriched_df.to_csv(output_path, index=False)
-            logger.info(f"Dados salvos em {output_path}")
+            agg_config = self.config.get('data_processing.aggregation_config', {
+                'id': 'count',
+                'siglaPartido': 'nunique',
+                'nome': 'nunique'
+            })
+            
+            stats = self.enriched_df.groupby('Espectro Político').agg(agg_config)
+            stats.columns = ['Total_Discursos', 'Total_Partidos', 'Total_Deputados']
+            
+            stats.to_csv(stats_path, index=True)
             
         except Exception as e:
-            logger.exception(f"Erro ao salvar dados: {str(e)}")
+            self.logger.exception(f"Erro ao gerar estatísticas: {str(e)}")
             raise
+
 
     def get_spectrum_statistics(self) -> pd.DataFrame:
         """

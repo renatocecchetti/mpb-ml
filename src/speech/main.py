@@ -1,42 +1,58 @@
-from DiscursosDeputadosCollector import DiscursosDeputadosCollector
-from PoliticalSpectrumEnricher import PoliticalSpectrumEnricher
+import sys
+from pathlib import Path
+import logging
+current_dir = Path(__file__).parent
+project_root = current_dir.parent.parent
+sys.path.append(str(project_root))
 
-# Exemplo de uso
-collector = DiscursosDeputadosCollector()
+from src.speech import DiscursosDeputadosCollector
+from src.speech import PoliticalSpectrumEnricher
+from src.config import ConfigManager
 
-path = '../../data/speech'
-speech_file = f'{path}/Discursos.csv'
-party_file = f'{path}/Partidos.csv'
-merged_file = f'{path}/Discursos_Enriquecidos.csv'
+config = ConfigManager()
 
-# Coleta discursos de um período específico
-df = collector.collect_discursos(
-    data_inicio='2020-01-01',
-    data_fim='2024-12-31',
-    output_file=speech_file
+# Configura logging
+logging.basicConfig(
+    level=config.get('general.log_level'),
+    format=config.get('general.log_format')
 )
+logger = logging.getLogger(__name__)
 
-# Análise dos dados
-print(f"Total de discursos coletados: {len(df)}")
-print("\nAmostra de transcrições:")
-print(df.sample(5)['transcricao'])
-
-# Exemplo de uso
+# Inicializa coletores
+collector = DiscursosDeputadosCollector()
 enricher = PoliticalSpectrumEnricher()
 
-# Carrega os dados
-enricher.load_data(
-    partidos_path=party_file,
-    discursos_path=speech_file
-)
+try:
+    # Coleta discursos
+    df = collector.collect_discursos(
+        data_inicio=config.get('discursos.data_collection.data_inicio'),
+        data_fim=config.get('discursos.data_collection.data_fim'),
+        output_file=str(Path(config.get_full_path('discursos.paths.base_dir')) / 
+                         config.get('discursos.paths.discursos_file'))
+    )
+    
+    # Enriquece dados
+    enricher.load_data(
+        partidos_path=str(Path(config.get_full_path('discursos.paths.base_dir')) /
+                          config.get('discursos.paths.partidos_file')),
+        discursos_path=str(Path(config.get_full_path('discursos.paths.base_dir')) /
+                           config.get('discursos.paths.discursos_file'))
+    )
 
-# Enriquece os dados
-df_enriched = enricher.enrich_data()
+    df_enriched = enricher.enrich_data()
 
-# Salva os dados enriquecidos
-enricher.save_enriched_data(merged_file)
-
-# Obtém estatísticas
-stats = enricher.get_spectrum_statistics()
-print("\nEstatísticas por Espectro Político:")
-print(stats)
+    enricher.save_enriched_data(
+        enriched_path=str(Path(config.get_full_path('discursos.paths.base_dir')) /
+                         config.get('discursos.paths.merged_file')),
+        stats_path=str(Path(config.get_full_path('discursos.paths.base_dir')) /
+                          config.get('discursos.paths.stats_file'))
+    )
+    
+    # Obtém e exibe estatísticas
+    stats = enricher.get_spectrum_statistics()
+    logger.info("\nEstatísticas por Espectro Político:")
+    logger.info(stats)
+    
+except Exception as e:
+    logger.exception("Erro durante o processamento")
+    raise

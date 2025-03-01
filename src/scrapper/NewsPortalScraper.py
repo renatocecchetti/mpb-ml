@@ -1,9 +1,11 @@
+from pathlib import Path
 import requests
 import logging
 import time
 from typing import List, Dict
 from tqdm import tqdm
-from NewsScraper import NewsScraper
+from .NewsScraper import NewsScraper
+from src.config import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -13,141 +15,107 @@ class NewsPortalScraper:
     """
     
     def __init__(self):
-        """Inicializa o scraper com a classe base NewsScraper"""
+        self.config = ConfigManager()
         self.scraper = NewsScraper()
+        self.logger = logging.getLogger(__name__)
 
-    def scrape_g1(self, limit_per_columnist: int = 100) -> List[str]:
+    def scrape_portal(self, portal_name: str) -> List[str]:
         """
-        Realiza scraping das colunas políticas do G1
+        Método para realizar scraping de portais
         
         Args:
-            limit_per_columnist: Número máximo de notícias por colunista
+            portal_name: Nome do portal conforme definido no config.yaml
+            
+        Returns:
+            Lista de textos coletados
         """
-        g1_columnists = {
-            'andreia_sadi': 'https://g1.globo.com/politica/blog/andreia-sadi/',
-            'camila_bomfim': 'https://g1.globo.com/politica/blog/camila-bomfim/',
-            'daniela_lima': 'https://g1.globo.com/politica/blog/daniela-lima/',
-            'gerson_camarotti': 'https://g1.globo.com/politica/blog/gerson-camarotti/',
-            'julia_duailibi': 'https://g1.globo.com/politica/blog/julia-duailibi/',
-            'natuza_nery': 'https://g1.globo.com/politica/blog/natuza-nery/',
-            'octavio_guedes': 'https://g1.globo.com/politica/blog/octavio-guedes/',
-            'valdo_cruz': 'https://g1.globo.com/politica/blog/valdo-cruz/',
-        }
-
-        news = []
-        texts = []
-
+        if portal_name.lower() == 'cnn':
+            return self.scrape_cnn()
+            
         try:
-            for columnist_name, url in tqdm(g1_columnists.items(), desc="Coletando colunistas do G1"):
-                logger.info(f'Coletando artigos de {columnist_name}')
-                column_news = self.scraper.get_news(
-                    limit=limit_per_columnist,
-                    url=url,
-                    post_class='bastian-feed-item',
-                )
-                news.extend(column_news)
-                time.sleep(0.5)
+            # Obtém configurações específicas do portal
+            portal_config = self.config.get(f'news_portals.{portal_name.lower()}')
+            if not portal_config:
+                raise ValueError(f"Configurações não encontradas para o portal {portal_name}")
+            
+            columnists = portal_config.get('columnists', {})
+            content_class = portal_config.get('content_class')
+            post_class = portal_config.get('post_class')
+            limit_per_columnist = self.config.get('scraping.limit_per_columnist')
+            
+            news = []
+            texts = []
 
-            for article in tqdm(news, desc="Coletando textos do G1"):
-                text = self.scraper.get_full_text(
-                    url=article['link'],
-                    content_class='mc-column content-text active-extra-styles'
-                )
-                if text:
-                    texts.append(text)
-                time.sleep(0.5)
+            # Coleta artigos de cada colunista
+            for columnist_name, url in tqdm(columnists.items(), 
+                                         desc=f"Coletando colunistas do {portal_name}"):
+                self.logger.info(f'Coletando artigos de {columnist_name}')
+                
+                try:
+                    column_news = self.scraper.get_news(
+                        limit=limit_per_columnist,
+                        url=url,
+                        post_class=post_class,
+                    )
+                    news.extend(column_news)
+                    time.sleep(self.config.get('scraping.sleep_time'))
+                    
+                except Exception as e:
+                    self.logger.warning(f"Erro ao coletar artigos de {columnist_name}: {str(e)}")
+                    continue
 
-            logger.info(f'Total de textos coletados do G1: {len(texts)}')
+            # Coleta texto completo de cada artigo
+            for article in tqdm(news, desc=f"Coletando textos do {portal_name}"):
+                try:
+                    # Trata URLs relativas se necessário
+                    if portal_name.lower() == 'gazeta' and not article['link'].startswith('http'):
+                        full_url = 'https://www.gazetadopovo.com.br' + article['link']
+                    else:
+                        full_url = article['link']
+                        
+                    text = self.scraper.get_full_text(
+                        url=full_url,
+                        content_class=content_class
+                    )
+                    if text:
+                        texts.append(text)
+                    time.sleep(self.config.get('scraping.sleep_time'))
+                    
+                except Exception as e:
+                    self.logger.warning(f"Erro ao coletar texto do artigo {article['link']}: {str(e)}")
+                    continue
+
+            self.logger.info(f'Total de textos coletados do {portal_name}: {len(texts)}')
             return texts
 
         except Exception as e:
-            logger.exception(f'Erro ao coletar notícias do G1: {str(e)}')
+            self.logger.exception(f'Erro ao coletar notícias do {portal_name}: {str(e)}')
             return []
 
-    def scrape_folha(self, limit_per_columnist: int = 100) -> List[str]:
+    def scrape_cnn(self) -> List[str]:
         """
-        Realiza scraping das colunas políticas da Folha
+        Método específico para CNN devido ao seu formato diferenciado (API)
         """
-        folha_columnists = {
-            'adriana_fernandes': 'https://www1.folha.uol.com.br/colunas/adriana-fernandes/#40',
-            'bruno_boghossian': 'https://www1.folha.uol.com.br/colunas/bruno-boghossian/',
-            'camila_rocha': 'https://www1.folha.uol.com.br/colunas/camila-rocha/',
-            'claudio_hebdo': 'https://www1.folha.uol.com.br/blogs/claudio-hebdo/',
-            'conrado_hubner': 'https://www1.folha.uol.com.br/colunas/conrado-hubner-mendes/',
-            'deborah_bizarria': 'https://www1.folha.uol.com.br/colunas/deborah-bizarria/',
-            'desigualdades': 'https://www1.folha.uol.com.br/colunas/desigualdades/',
-            'djamila_ribeiro': 'https://www1.folha.uol.com.br/colunas/djamila-ribeiro/',
-            'dora_kramer': 'https://www1.folha.uol.com.br/colunas/dora-kramer/',
-            'frederico_vasconcelos': 'https://www1.folha.uol.com.br/blogs/frederico-vasconcelos/',
-            'ian_bremmer': 'https://www1.folha.uol.com.br/colunas/ian-bremmer/',
-            'joao_pereira_coutinho': 'https://www1.folha.uol.com.br/colunas/joaopereiracoutinho/',
-            'marcos_lisboa': 'https://www1.folha.uol.com.br/colunas/marcos-lisboa/',
-            'marcos_mendes': 'https://www1.folha.uol.com.br/colunas/marcos-mendes/',
-            'oscar_vilhena': 'https://www1.folha.uol.com.br/colunas/oscarvilhenavieira/',
-            'painel': 'https://www1.folha.uol.com.br/colunas/painel/',
-        }
-
-        news = []
-        texts = []
-
-        try:
-            for columnist_name, url in tqdm(folha_columnists.items(), desc="Coletando colunistas da Folha"):
-                logger.info(f'Coletando artigos de {columnist_name}')
-                column_news = self.scraper.get_news(
-                    limit=limit_per_columnist,
-                    url=url,
-                    post_class='c-headline__content',
-                )
-                news.extend(column_news)
-                time.sleep(0.5)
-
-            for article in tqdm(news, desc="Coletando textos da Folha"):
-                text = self.scraper.get_full_text(
-                    url=article['link'],
-                    content_class='c-news__content'
-                )
-                if text:
-                    texts.append(text)
-                time.sleep(0.5)
-
-            logger.info(f'Total de textos coletados da Folha: {len(texts)}')
-            return texts
-
-        except Exception as e:
-            logger.exception(f'Erro ao coletar notícias da Folha: {str(e)}')
-            return []
-
-    def scrape_cnn(self, limit_pages: int = 10) -> List[str]:
-        """
-        Realiza scraping das colunas políticas da CNN Brasil
-        """
-        cnn_columnists = {
-            'jussara_soares': '48603',
-            'luisa_martins': '59360',
-            'taina_falcao': '16643',
-            'gustavo_uribe': '684',
-            'americo_martins': '37836',
-            'larissa_rodrigues': '15966',
-            'debora_bergamasco': '56760',
-            'teo_cury': '16274',
-            'julliana_lopes': '16259',
-            'clarissa_oliveira': '47066',
-            'iuri_pitta': '488',
-        }
-
+        portal_config = self.config.get('news_portals.cnn')
+        columnists = portal_config.get('columnists', {}).get('id_mapping', {})
+        base_url = portal_config.get('base_url')
+        content_class = portal_config.get('content_class')
+        limit_pages = self.config.get('scraping.limit_pages', 10)
+        
         texts = []
         
         try:
-            for columnist_name, columnist_id in tqdm(cnn_columnists.items(), desc="Coletando colunistas da CNN"):
-                logger.info(f'Coletando artigos de {columnist_name}')
+            for columnist_name, columnist_id in tqdm(columnists.items(), 
+                                                   desc="Coletando colunistas da CNN"):
+                self.logger.info(f'Coletando artigos de {columnist_name}')
                 
                 for page in range(1, limit_pages + 1):
-                    url = f"https://www.cnnbrasil.com.br/wp-json/cnnbr/blogs/v1/articles?page={page}&term_id={columnist_id}"
-                    
                     try:
+                        url = f"{base_url}?page={page}&term_id={columnist_id}"
+                        
                         response = requests.get(
                             url, 
-                            timeout=10, 
+                            timeout=self.config.get('scraping.timeout'), 
                             headers=self.scraper.headers
                         )
                         
@@ -159,191 +127,65 @@ class NewsPortalScraper:
                             break
                             
                         for article in articles:
-                            text = self.scraper.get_full_text(
-                                article['link'],
-                                content_class='single-content'
-                            )
-                            if text:
-                                texts.append(text)
+                            try:
+                                text = self.scraper.get_full_text(
+                                    article['link'],
+                                    content_class=content_class
+                                )
+                                if text:
+                                    texts.append(text)
+                            except Exception as e:
+                                self.logger.warning(
+                                    f"Erro ao coletar texto do artigo {article['link']}: {str(e)}"
+                                )
+                                continue
                                 
-                        time.sleep(0.5)
+                        time.sleep(self.config.get('scraping.sleep_time'))
                         
                     except Exception as e:
-                        logger.warning(f"Erro na página {page} do colunista {columnist_name}: {str(e)}")
+                        self.logger.warning(
+                            f"Erro na página {page} do colunista {columnist_name}: {str(e)}"
+                        )
                         continue
 
-            logger.info(f'Total de textos coletados da CNN: {len(texts)}')
+            self.logger.info(f'Total de textos coletados da CNN: {len(texts)}')
             return texts
 
         except Exception as e:
-            logger.exception(f'Erro ao coletar notícias da CNN: {str(e)}')
+            self.logger.exception(f'Erro ao coletar notícias da CNN: {str(e)}')
             return []
 
-    def scrape_gazeta(self, limit_per_columnist: int = 20) -> List[str]:
+    def scrape_all_portals(self) -> Dict[str, List[str]]:
         """
-        Realiza scraping das colunas políticas da Gazeta do Povo
+        Realiza scraping de todos os portais configurados
+        
+        Returns:
+            Dicionário com os textos de cada portal
         """
-        gazeta_columnists = {
-            'adriano_gianturco': 'https://www.gazetadopovo.com.br/vozes/adriano-gianturco/',
-            'alan_ghani': 'https://www.gazetadopovo.com.br/vozes/alan-ghani/',
-            'alexandre_garcia': 'https://www.gazetadopovo.com.br/vozes/alexandre-garcia/',
-            'carlos_di_franco': 'https://www.gazetadopovo.com.br/vozes/carlos-alberto-di-franco/',
-            'deltan_dallagnol': 'https://www.gazetadopovo.com.br/vozes/deltan-dallagnol/',
-            'rodrigo_constantino': 'https://www.gazetadopovo.com.br/rodrigo-constantino/',
-            'sergio_moro': 'https://www.gazetadopovo.com.br/vozes/sergio-moro/',
-        }
+        results = {}
+        supported_portals = self.config.get('news_portals.supported_portals', [])
+        
+        for portal in supported_portals:
+            self.logger.info(f"Iniciando coleta do portal {portal}")
+            texts = self.scrape_portal(portal)
+            results[portal] = texts
+            
+        return results
 
-        news = []
-        texts = []
-
-        try:
-            for columnist_name, url in tqdm(gazeta_columnists.items(), desc="Coletando colunistas da Gazeta"):
-                logger.info(f'Coletando artigos de {columnist_name}')
-                
-                column_news = self.scraper.get_news(
-                    limit=limit_per_columnist,
-                    url=url,
-                    post_class='cardDefault_card-content__q5Ykc cardDefault_has-image__NZ4EN cardDefault_visual-image-type-right__glBPB',
-                )
-                
-                news.extend(column_news)
-                time.sleep(0.5)
-
-            for article in tqdm(news, desc="Coletando textos da Gazeta"):
-                full_url = 'https://www.gazetadopovo.com.br' + article['link']
-                text = self.scraper.get_full_text(
-                    url=full_url,
-                    content_class='postBody_post-body-container__1KhtH'
-                )
-                if text:
-                    texts.append(text)
-                time.sleep(0.5)
-
-            logger.info(f'Total de textos coletados da Gazeta: {len(texts)}')
-            return texts
-
-        except Exception as e:
-            logger.exception(f'Erro ao coletar notícias da Gazeta: {str(e)}')
-            return []
-
-    def scrape_istoe(self, limit_per_columnist: int = 100) -> List[str]:
-        """
-        Realiza scraping das colunas políticas da IstoÉ
-        """
-        istoe_columnists = {
-            'mazzini': 'https://istoe.com.br/coluna/coluna-do-mazzini/',
-            'kertzman': 'https://istoe.com.br/coluna/ricardo-kertzman/',
-        }
-
-        news = []
-        texts = []
-
-        try:
-            for columnist_name, url in tqdm(istoe_columnists.items(), desc="Coletando colunistas da IstoÉ"):
-                logger.info(f'Coletando artigos de {columnist_name}')
-                
-                column_news = self.scraper.get_news(
-                    limit=limit_per_columnist,
-                    url=url,
-                    post_class='box-article-horizontal-cat d-flex f-column md-column sm-column col-lg-100',
-                    type='article'
-                )
-                
-                news.extend(column_news)
-                time.sleep(0.5)
-
-            for article in tqdm(news, desc="Coletando textos da IstoÉ"):
-                text = self.scraper.get_full_text(
-                    url=article['link'],
-                    content_class='post-content-wrap col-lg-100 col-md-100'
-                )
-                if text:
-                    texts.append(text)
-                time.sleep(0.5)
-
-            logger.info(f'Total de textos coletados da IstoÉ: {len(texts)}')
-            return texts
-
-        except Exception as e:
-            logger.exception(f'Erro ao coletar notícias da IstoÉ: {str(e)}')
-            return []
-
-    def scrape_metropoles(self, limit_per_columnist: int = 20) -> List[str]:
-        """
-        Realiza scraping das colunas políticas do Metrópoles
-        """
-        metropoles_columnists = {
-            'grande_angular': 'https://www.metropoles.com/colunas/grande-angular',
-            'igor_gadelha': 'https://www.metropoles.com/colunas/igor-gadelha',
-            'leandro_mazzini': 'https://www.metropoles.com/colunas/podcast-do-leandro-mazzini',
-            'tacio_lorran': 'https://www.metropoles.com/colunas/tacio-lorran',
-            'mario_sabino': 'https://www.metropoles.com/colunas/mario-sabino',
-            'paulo_cappelli': 'https://www.metropoles.com/colunas/paulo-cappelli',
-        }
-
-        news = []
-        texts = []
-
-        try:
-            for columnist_name, url in tqdm(metropoles_columnists.items(), desc="Coletando colunistas do Metrópoles"):
-                logger.info(f'Coletando artigos de {columnist_name}')
-                
-                column_news = self.scraper.get_news(
-                    limit=limit_per_columnist,
-                    url=url,
-                    post_class='Grid__Col-sc-owmjhw-2 iyeymd'
-                )
-                
-                news.extend(column_news)
-                time.sleep(0.5)
-
-            for article in tqdm(news, desc="Coletando textos do Metrópoles"):
-                text = self.scraper.get_full_text(
-                    url=article['link'],
-                    content_class='ConteudoNoticiaWrapper__Artigo-sc-19fsm27-1 iZYHrO'
-                )
-                if text:
-                    texts.append(text)
-                time.sleep(0.5)
-
-            logger.info(f'Total de textos coletados do Metrópoles: {len(texts)}')
-            return texts
-
-        except Exception as e:
-            logger.exception(f'Erro ao coletar notícias do Metrópoles: {str(e)}')
-            return []
-
-    def save_portal_texts(self, portal: str, texts: List[str], filename: str = None) -> None:
+    def save_portal_texts(self, portal: str, texts: List[str]) -> None:
         """
         Salva os textos de um portal em arquivo
         
         Args:
             portal: Nome do portal
             texts: Lista de textos para salvar
-            filename: Nome do arquivo (opcional)
         """
         if not texts:
-            logger.warning(f'Nenhum texto para salvar do portal {portal}')
+            self.logger.warning(f'Nenhum texto para salvar do portal {portal}')
             return
 
-        filename = filename or f'{portal}_texts.txt'
-        self.scraper.save_texts_to_file(texts, filename)
-
-    def scrape_all(self, limit_per_columnist: int = 100) -> Dict[str, List[str]]:
-        """
-        Realiza scraping de todos os portais configurados
+        output_dir = Path(self.config.get_full_path('general.data_dir_portals'))
+        output_dir.mkdir(exist_ok=True)
         
-        Args:
-            limit_per_columnist: Número máximo de notícias por colunista
-            
-        Returns:
-            Dicionário com os textos de cada portal
-        """
-        return {
-            'g1': self.scrape_g1(limit_per_columnist),
-            'folha': self.scrape_folha(limit_per_columnist),
-            'cnn': self.scrape_cnn(limit_per_columnist),
-            'gazeta': self.scrape_gazeta(limit_per_columnist),
-            'istoe': self.scrape_istoe(limit_per_columnist),
-            'metropoles': self.scrape_metropoles(limit_per_columnist)
-        }
+        filename = output_dir / f'{portal}_political_news.txt'
+        self.scraper.save_texts_to_file(texts, str(filename))

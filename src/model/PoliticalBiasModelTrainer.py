@@ -1,7 +1,6 @@
-# model_trainer.py
+import os
 import numpy as np
 import pandas as pd
-import torch
 from transformers import AutoTokenizer, AutoModel
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
@@ -9,22 +8,24 @@ from sklearn.metrics import classification_report, confusion_matrix
 from typing import Tuple, Dict, List
 import logging
 from tqdm import tqdm
+from src.config import ConfigManager
 import joblib
 
 logger = logging.getLogger(__name__)
 
 class PoliticalBiasModelTrainer:
-    def __init__(self, modelo: str = "neuralmind/bert-base-portuguese-cased"):
-        """
-        Inicializa o treinador do modelo de viés político
+    def __init__(self):
+        self.config = ConfigManager()
+        self.bert_model = self.config.get('model.bert_model')
+        self.embedding_file = f'{self.config.get_full_path('general.models_dir')}/{self.config.get('model.embeddings_file_name')}'
+        self.reuse_embedding = self.config.get('model.reuse_embedding', False)
         
-        Args:
-            modelo: Nome do modelo BERT pré-treinado
-        """
-        self.tokenizer = AutoTokenizer.from_pretrained(modelo)
-        self.bert_model = AutoModel.from_pretrained(modelo)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.bert_model)
+        self.bert_model = AutoModel.from_pretrained(self.bert_model)
         self.classifier = None
-        self.mapping = {
+        
+        # Mapeamento de classes
+        self.mapping = self.config.get('model.class_mapping', {
             'Centro': 0,
             'Centro-direita': 1,
             'Direita': 1,
@@ -32,16 +33,19 @@ class PoliticalBiasModelTrainer:
             'Centro-esquerda': 2,
             'Esquerda': 2,
             'Extrema-esquerda': 2
-        }
+        })
         
-    def generate_embeddings(self, texts: List[str], batch_size: int = 10) -> np.ndarray:
-        """Gera embeddings para os textos usando BERT"""
+        self.logger = logging.getLogger(__name__)
+
+    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
+        batch_size = self.config.get('model.batch_size', 10)
         embeddings_list = []
         
         for i in tqdm(range(0, len(texts), batch_size)):
             batch_texts = texts[i:i+batch_size]
             inputs = self.tokenizer(batch_texts, return_tensors="pt", 
-                                  truncation=True, padding=True, max_length=512)
+                                  truncation=True, padding=True, 
+                                  max_length=self.config.get('model.max_length', 512))
             
             outputs = self.bert_model(**inputs)
             batch_embeddings = outputs.last_hidden_state.mean(dim=1).detach().numpy()
@@ -53,22 +57,34 @@ class PoliticalBiasModelTrainer:
         """Prepara os dados para treinamento"""
         texts = df['transcricao'].tolist()
         labels = df['Espectro Político'].map(self.mapping)
-        
-        logger.info("Gerando embeddings...")
-        embeddings = self.generate_embeddings(texts)
+
+        print(self.reuse_embedding)
+        print(os.path.exists(self.embedding_file))
+
+        if self.reuse_embedding and os.path.exists(self.embedding_file):
+            try:
+                embeddings = np.load(self.embedding_file)
+                return embeddings, labels.values
+            except FileNotFoundError:
+                logger.info("Arquivo de embeddings não encontrado. Gerando novos embeddings...")
+        else:
+            logger.info("Gerando embeddings...")
+            embeddings = self.generate_embeddings(texts)
+            np.save(self.embedding_file, embeddings)
         
         return embeddings, labels.values
-    
+
     def train(self, X: np.ndarray, y: np.ndarray) -> Tuple[MLPClassifier, Dict]:
-        """Treina o modelo"""
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, stratify=y, random_state=1
+            X, y, 
+            stratify=y, 
+            random_state=self.config.get('model.random_state', 1)
         )
         
         self.classifier = MLPClassifier(
-            hidden_layer_sizes=(100),
-            random_state=1,
-            max_iter=5000,
+            hidden_layer_sizes=self.config.get('model.hidden_layer_sizes', (100)),
+            random_state=self.config.get('model.random_state', 1),
+            max_iter=self.config.get('model.max_iter', 5000),
             verbose=True
         )
         
